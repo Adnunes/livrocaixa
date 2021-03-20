@@ -1,0 +1,109 @@
+from datetime import datetime
+
+class LancamentoDeCaixa:
+    def __init__(self, observacao,valor):
+        self._data = datetime.today()
+        self.observacao = observacao
+        self._saldo = 0
+        self._valor = valor
+
+
+    def __str__(self):
+        return f'Data: {self.data} | Observação: {self.observacao.capitalize()} ' \
+               f'| Valor: {self.valor} | Saldo: {self.saldo:2}  '
+
+    @property
+    def data(self):
+        data_padrao_brasil = self._data.strftime('%d/%m/%y')
+        return data_padrao_brasil
+
+    @property
+    def numero_documento(self):
+        return self._numero_documeto
+
+    @property
+    def saldo(self):
+        return self._saldo
+
+    @saldo.setter
+    def saldo(self, saldo):
+        self._saldo = saldo
+
+    @property
+    def valor(self):
+        return self._valor
+
+
+    def __disponibilidade_de_saldo(self, valor_de_saida):#criado para verificar se há saldo no caixa
+        valor_disponivel = self._saldo - valor_de_saida
+        return valor_disponivel >=0
+
+    def entrada_de_caixa(self):
+        'esse metodo lança uma entrada de caixa considerando o valor instanciado'
+        self.saldo += self.valor
+
+    def saida_de_caixa(self):
+        self.saldo -= self.valor if (self.__disponibilidade_de_saldo(self._valor )) else "Saldo indisponível"
+
+    def recebe_saldo_anterior(self, saldo_anterior):
+       self._saldo = saldo_anterior
+
+class Menu:
+
+    def __init__(self, interacao):
+
+        if interacao == "S":
+            self._interacao = interacao
+
+        else:
+            print('Ok Não faremos nada.')
+            return None
+
+
+
+interacao = input("Deseja fazer um lançamento?(S/N): ")
+resposta = Menu(interacao.upper())
+lista_de_lancamentos = []
+saldo_anterior = 0
+
+if resposta:
+
+    while resposta != "Q":
+
+        print('**************************************:')
+        descricao_do_lançamento = input('Descrição: ')
+        valor_do_lancamento = float(input('Valor do lancamento: '))
+        resposta = input("Entrada: E | Saida: S | Responda: ")
+        resposta = resposta.upper()
+        print('**************************************:')
+
+        if resposta == "E":
+            lancamento_de_entrada = LancamentoDeCaixa(descricao_do_lançamento,valor_do_lancamento)
+            lancamento_de_entrada.entrada_de_caixa()
+
+
+            saldo_anterior += lancamento_de_entrada.valor
+
+
+            lista_de_lancamentos.append(lancamento_de_entrada)
+            lancamento_de_entrada.recebe_saldo_anterior(saldo_anterior)
+
+        elif resposta == "S":
+            print('ok')
+
+        encerrar_while = input('Deseja fazer mais um lançamento? S/N: ')
+        encerrar_while = encerrar_while.upper()
+
+        if encerrar_while == 'N':
+            break
+
+    print(f'\n{30 * "*"} LIVRO CAIXA {30 * "*"}')
+
+    lista_de_lancamentos = enumerate(lista_de_lancamentos)
+    for index, resultado in lista_de_lancamentos:
+        print(f'Cod: {index} | {resultado}')
+
+
+    #entrada ou saida?
+    #lançar
+
