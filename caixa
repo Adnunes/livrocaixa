@@ -1,16 +1,19 @@
 from datetime import datetime
+import locale
+
 
 class LancamentoDeCaixa:
     def __init__(self, observacao,valor):
+        locale.setlocale(locale.LC_MONETARY, "pt_BR.UTF-8")
         self._data = datetime.today()
         self.observacao = observacao
         self._saldo = 0
-        self._valor = valor
+        self._valor = round(valor,2)
 
 
     def __str__(self):
         return f'Data: {self.data} | Observação: {self.observacao.capitalize()} ' \
-               f'| Valor: {self.valor} | Saldo: {self.saldo:2}  '
+               f'| Valor: {self._formata_o_valor()} | Saldo: {self._formata_o_saldo()}  '
 
     @property
     def data(self):
@@ -25,9 +28,6 @@ class LancamentoDeCaixa:
     def saldo(self):
         return self._saldo
 
-    @saldo.setter
-    def saldo(self, saldo):
-        self._saldo = saldo
 
     @property
     def valor(self):
@@ -40,13 +40,22 @@ class LancamentoDeCaixa:
 
     def entrada_de_caixa(self):
         'esse metodo lança uma entrada de caixa considerando o valor instanciado'
-        self.saldo += self.valor
+        self._saldo += self.valor
 
     def saida_de_caixa(self):
-        self.saldo -= self.valor if (self.__disponibilidade_de_saldo(self._valor )) else "Saldo indisponível"
+
+        self._saldo -= self.valor if (self.__disponibilidade_de_saldo(self._valor )) else "Saldo indisponível"
 
     def recebe_saldo_anterior(self, saldo_anterior):
        self._saldo = saldo_anterior
+
+    def _formata_o_valor(self):
+        valor_formatado = locale.currency(self._valor, grouping= True)
+        return valor_formatado
+
+    def _formata_o_saldo(self):
+        valor_formatado = locale.currency(self._saldo, grouping=True)
+        return valor_formatado
 
 class Menu:
 
