@@ -43,8 +43,7 @@ class LancamentoDeCaixa:
         self._saldo += self.valor
 
     def saida_de_caixa(self):
-
-        self._saldo -= self.valor if (self.__disponibilidade_de_saldo(self._valor )) else "Saldo indisponível"
+        self._saldo -= self.valor
 
     def recebe_saldo_anterior(self, saldo_anterior):
        self._saldo = saldo_anterior
@@ -60,34 +59,41 @@ class LancamentoDeCaixa:
 class Menu:
 
     def __init__(self, interacao):
+        self.__interacao = interacao
+        self.encerrar_programa = 's'
 
-        if interacao == "S":
-            self._interacao = interacao
-
-        else:
-            print('Ok Não faremos nada.')
-            return None
-
+    @property
+    def interacao(self):
+        return self.__interacao
 
 
-interacao = input("Deseja fazer um lançamento?(S/N): ")
-resposta = Menu(interacao.upper())
+    def informacoes_do_lancamento(self):
+        print('**************************************:')
+        descricao_do_lançamento = input('Descrição: ')
+        valor_do_lancamento = float(input('Valor do lancamento: R$'))
+        resposta = input("Entrada: E | Saida: S ===> ")
+        resposta = resposta.upper()
+        print('**************************************:')
+        return resposta, descricao_do_lançamento, valor_do_lancamento
+
+
+
+interacao = input("Deseja fazer um lançamento?(S/N): ").upper()
+print(interacao)
+
+resposta_do_usuario= Menu(interacao)
+
 lista_de_lancamentos = []
 saldo_anterior = 0
 
-if resposta:
+if (resposta_do_usuario.interacao == 'S'):
 
-    while resposta != "Q":
+    while resposta_do_usuario.encerrar_programa != "N":
 
-        print('**************************************:')
-        descricao_do_lançamento = input('Descrição: ')
-        valor_do_lancamento = float(input('Valor do lancamento: '))
-        resposta = input("Entrada: E | Saida: S | Responda: ")
-        resposta = resposta.upper()
-        print('**************************************:')
+        resposta_do_lancamento, descricao, valor = resposta_do_usuario.informacoes_do_lancamento()
 
-        if resposta == "E":
-            lancamento_de_entrada = LancamentoDeCaixa(descricao_do_lançamento,valor_do_lancamento)
+        if resposta_do_lancamento == "E":
+            lancamento_de_entrada = LancamentoDeCaixa(descricao,valor)
             lancamento_de_entrada.entrada_de_caixa()
 
 
@@ -97,11 +103,17 @@ if resposta:
             lista_de_lancamentos.append(lancamento_de_entrada)
             lancamento_de_entrada.recebe_saldo_anterior(saldo_anterior)
 
-        elif resposta == "S":
-            print('ok')
+        elif resposta_do_lancamento == "S":
+            lancamento_de_saida = LancamentoDeCaixa(descricao,valor)
+            lancamento_de_saida.saida_de_caixa()
+
+            saldo_anterior -= lancamento_de_saida.valor
+
+            lista_de_lancamentos.append(lancamento_de_saida)
+            lancamento_de_saida.recebe_saldo_anterior(saldo_anterior)
 
         encerrar_while = input('Deseja fazer mais um lançamento? S/N: ')
-        encerrar_while = encerrar_while.upper()
+        resposta_do_usuario.encerrar_programa = encerrar_while.upper()
 
         if encerrar_while == 'N':
             break
