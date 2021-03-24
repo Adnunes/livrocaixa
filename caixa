@@ -1,15 +1,14 @@
 from datetime import datetime
 import locale
-
+import pandas as pd
 
 class LancamentoDeCaixa:
-    def __init__(self, observacao,valor):
+    def __init__(self, observacao, valor):
         locale.setlocale(locale.LC_MONETARY, "pt_BR.UTF-8")
         self._data = datetime.today()
         self.observacao = observacao
         self._saldo = 0
-        self._valor = round(valor,2)
-
+        self._valor = round(valor, 2)
 
     def __str__(self):
         return f'Data: {self.data} | Observação: {self.observacao.capitalize()} ' \
@@ -28,15 +27,13 @@ class LancamentoDeCaixa:
     def saldo(self):
         return self._saldo
 
-
     @property
     def valor(self):
         return self._valor
 
-
-    def __disponibilidade_de_saldo(self, valor_de_saida):#criado para verificar se há saldo no caixa
+    def __disponibilidade_de_saldo(self, valor_de_saida):  # criado para verificar se há saldo no caixa
         valor_disponivel = self._saldo - valor_de_saida
-        return valor_disponivel >=0
+        return valor_disponivel >= 0
 
     def entrada_de_caixa(self):
         'esse metodo lança uma entrada de caixa considerando o valor instanciado'
@@ -46,15 +43,16 @@ class LancamentoDeCaixa:
         self._saldo -= self.valor
 
     def recebe_saldo_anterior(self, saldo_anterior):
-       self._saldo = saldo_anterior
+        self._saldo = saldo_anterior
 
     def _formata_o_valor(self):
-        valor_formatado = locale.currency(self._valor, grouping= True)
+        valor_formatado = locale.currency(self._valor, grouping=True)
         return valor_formatado
 
     def _formata_o_saldo(self):
         valor_formatado = locale.currency(self._saldo, grouping=True)
         return valor_formatado
+
 
 class Menu:
 
@@ -62,10 +60,11 @@ class Menu:
         self.__interacao = interacao
         self.encerrar_programa = 's'
 
+    def __str__(self):
+        pass
     @property
     def interacao(self):
         return self.__interacao
-
 
     def informacoes_do_lancamento(self):
         print('**************************************:')
@@ -76,14 +75,37 @@ class Menu:
         print('**************************************:')
         return resposta, descricao_do_lançamento, valor_do_lancamento
 
+    def transforma_em_dataframe(self, lista_de_lancamentos):
+        lista_de_lancamentos = enumerate(lista_de_lancamentos)
+        for index, resultado in lista_de_lancamentos:
+            print(f'Cod: {index} | {resultado}')
+
+    def dicionario_de_lancamento(self, lista_descricao,lista_saida,lista_entrada, lista_saldo, lista_data):
+
+
+        dicionario_de_lancamento = {'Data': lista_de_data,
+                                    'Descricao': lista_de_descricao,
+                                    'Entrada (C)': lista_de_entradas,
+                                    'Saídas (D)': lista_de_saidas,
+                                    'Saldo': lista_de_saldo}
+
+        df = pd.DataFrame(dicionario_de_lancamento)
+
+        return print(df)
+
 
 
 interacao = input("Deseja fazer um lançamento?(S/N): ").upper()
-print(interacao)
 
-resposta_do_usuario= Menu(interacao)
-
+resposta_do_usuario = Menu(interacao)
 lista_de_lancamentos = []
+lista_de_descricao = []
+lista_de_saldo = []
+lista_de_data = []
+lista_de_entradas = []
+lista_de_saidas = []
+
+
 saldo_anterior = 0
 
 if (resposta_do_usuario.interacao == 'S'):
@@ -91,26 +113,35 @@ if (resposta_do_usuario.interacao == 'S'):
     while resposta_do_usuario.encerrar_programa != "N":
 
         resposta_do_lancamento, descricao, valor = resposta_do_usuario.informacoes_do_lancamento()
+        lista_de_descricao.append(descricao)
+
 
         if resposta_do_lancamento == "E":
-            lancamento_de_entrada = LancamentoDeCaixa(descricao,valor)
+            lancamento_de_entrada = LancamentoDeCaixa(descricao, valor)
             lancamento_de_entrada.entrada_de_caixa()
 
-
             saldo_anterior += lancamento_de_entrada.valor
-
 
             lista_de_lancamentos.append(lancamento_de_entrada)
             lancamento_de_entrada.recebe_saldo_anterior(saldo_anterior)
 
+            lista_de_entradas.append(valor)
+            lista_de_saidas.append('')
+            lista_de_saldo.append(lancamento_de_entrada.saldo)
+            lista_de_data.append(lancamento_de_entrada.data)
+
         elif resposta_do_lancamento == "S":
-            lancamento_de_saida = LancamentoDeCaixa(descricao,valor)
+            lancamento_de_saida = LancamentoDeCaixa(descricao, valor)
             lancamento_de_saida.saida_de_caixa()
 
             saldo_anterior -= lancamento_de_saida.valor
 
-            lista_de_lancamentos.append(lancamento_de_saida)
             lancamento_de_saida.recebe_saldo_anterior(saldo_anterior)
+
+            lista_de_saidas.append(valor)
+            lista_de_entradas.append('')
+            lista_de_saldo.append(lancamento_de_saida.saldo)
+            lista_de_data.append(lancamento_de_saida.data)
 
         encerrar_while = input('Deseja fazer mais um lançamento? S/N: ')
         resposta_do_usuario.encerrar_programa = encerrar_while.upper()
@@ -118,13 +149,10 @@ if (resposta_do_usuario.interacao == 'S'):
         if encerrar_while == 'N':
             break
 
-    print(f'\n{30 * "*"} LIVRO CAIXA {30 * "*"}')
+    print(f'\n{20 * "*"} LIVRO CAIXA {20 * "*"}')
+    resposta_do_usuario.dicionario_de_lancamento(lista_de_descricao, lista_de_entradas, lista_de_saidas, lista_de_saldo,
+                                                                                     lista_de_data)
 
-    lista_de_lancamentos = enumerate(lista_de_lancamentos)
-    for index, resultado in lista_de_lancamentos:
-        print(f'Cod: {index} | {resultado}')
-
-
-    #entrada ou saida?
-    #lançar
-
+    #lista_de_lancamentos = enumerate(lista_de_lancamentos)
+    #for index, resultado in lista_de_lancamentos:
+    #    print(f'Cod: {index} | {resultado}')
