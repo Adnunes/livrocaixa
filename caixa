@@ -10,10 +10,6 @@ class LancamentoDeCaixa:
         self._saldo = 0
         self._valor = round(valor, 2)
 
-    def __str__(self):
-        return f'Data: {self.data} | Observação: {self.observacao.capitalize()} ' \
-               f'| Valor: {self._formata_o_valor()} | Saldo: {self._formata_o_saldo()}  '
-
     @property
     def data(self):
         data_padrao_brasil = self._data.strftime('%d/%m/%y')
@@ -53,6 +49,21 @@ class LancamentoDeCaixa:
         valor_formatado = locale.currency(self._saldo, grouping=True)
         return valor_formatado
 
+    def gerador_do_dataframe(self,valor, saldo_do_lancamento, data_do_lancamento, resposta_do_lancamento):
+        if resposta_do_lancamento == 'E':
+            lista_de_saidas.append('')
+            lista_de_entradas.append(valor)
+            lista_de_saldo.append(saldo_do_lancamento)
+            lista_de_data.append(data_do_lancamento)
+
+        elif resposta_do_lancamento== 'S':
+            lista_de_saidas.append(valor)
+            lista_de_entradas.append('')
+            lista_de_saldo.append(saldo_do_lancamento)
+            lista_de_data.append(data_do_lancamento)
+
+
+
 
 class Menu:
 
@@ -60,8 +71,16 @@ class Menu:
         self.__interacao = interacao
         self.encerrar_programa = 's'
 
-    def __str__(self):
-        pass
+    def imprime_data_frame(self):
+        dicionario_de_lancamento = {'Data': lista_de_data,
+                                    'Descricao': lista_de_descricao,
+                                    'Entrada (C)': lista_de_entradas,
+                                    'Saídas (D)': lista_de_saidas,
+                                    'Saldo': lista_de_saldo}
+        df = pd.DataFrame(dicionario_de_lancamento)
+        self.df = df
+        return df
+
     @property
     def interacao(self):
         return self.__interacao
@@ -75,44 +94,31 @@ class Menu:
         print('**************************************:')
         return resposta, descricao_do_lançamento, valor_do_lancamento
 
-    def transforma_em_dataframe(self, lista_de_lancamentos):
-        lista_de_lancamentos = enumerate(lista_de_lancamentos)
-        for index, resultado in lista_de_lancamentos:
-            print(f'Cod: {index} | {resultado}')
-
-    def dicionario_de_lancamento(self, lista_descricao,lista_saida,lista_entrada, lista_saldo, lista_data):
-
-
-        dicionario_de_lancamento = {'Data': lista_de_data,
-                                    'Descricao': lista_de_descricao,
-                                    'Entrada (C)': lista_de_entradas,
-                                    'Saídas (D)': lista_de_saidas,
-                                    'Saldo': lista_de_saldo}
-
-        df = pd.DataFrame(dicionario_de_lancamento)
-
-        return print(df)
+    def salvar_arquivo(self, resposta_salvar_arquivo):
+        if resposta_salvar_arquivo == 'S':
+            self.df.to_excel('livro_caixa.xlsx')
+            return print('Download concluído!')
+        else:
+           return print('ok, arquivo não salvo')
 
 
 
-interacao = input("Deseja fazer um lançamento?(S/N): ").upper()
-
-resposta_do_usuario = Menu(interacao)
 lista_de_lancamentos = []
 lista_de_descricao = []
 lista_de_saldo = []
 lista_de_data = []
 lista_de_entradas = []
 lista_de_saidas = []
-
-
 saldo_anterior = 0
 
-if (resposta_do_usuario.interacao == 'S'):
+interacao = input("Deseja fazer um lançamento?(S/N): ").upper()
+menu_do_usuario = Menu(interacao)
 
-    while resposta_do_usuario.encerrar_programa != "N":
+if (menu_do_usuario.interacao == 'S'):
 
-        resposta_do_lancamento, descricao, valor = resposta_do_usuario.informacoes_do_lancamento()
+    while menu_do_usuario.encerrar_programa != "N":
+
+        resposta_do_lancamento, descricao, valor = menu_do_usuario.informacoes_do_lancamento()
         lista_de_descricao.append(descricao)
 
 
@@ -124,35 +130,34 @@ if (resposta_do_usuario.interacao == 'S'):
 
             lista_de_lancamentos.append(lancamento_de_entrada)
             lancamento_de_entrada.recebe_saldo_anterior(saldo_anterior)
+            lancamento_de_entrada.gerador_do_dataframe(valor, lancamento_de_entrada.saldo, lancamento_de_entrada.data,
+                                                                                               resposta_do_lancamento)
 
-            lista_de_entradas.append(valor)
-            lista_de_saidas.append('')
-            lista_de_saldo.append(lancamento_de_entrada.saldo)
-            lista_de_data.append(lancamento_de_entrada.data)
 
         elif resposta_do_lancamento == "S":
             lancamento_de_saida = LancamentoDeCaixa(descricao, valor)
             lancamento_de_saida.saida_de_caixa()
 
             saldo_anterior -= lancamento_de_saida.valor
-
             lancamento_de_saida.recebe_saldo_anterior(saldo_anterior)
 
-            lista_de_saidas.append(valor)
-            lista_de_entradas.append('')
-            lista_de_saldo.append(lancamento_de_saida.saldo)
-            lista_de_data.append(lancamento_de_saida.data)
+            lancamento_de_saida.gerador_do_dataframe(valor, lancamento_de_saida.saldo, lancamento_de_saida.data,
+                                                                                         resposta_do_lancamento)
+
 
         encerrar_while = input('Deseja fazer mais um lançamento? S/N: ')
-        resposta_do_usuario.encerrar_programa = encerrar_while.upper()
+        menu_do_usuario.encerrar_programa = encerrar_while.upper()
 
         if encerrar_while == 'N':
             break
 
-    print(f'\n{20 * "*"} LIVRO CAIXA {20 * "*"}')
-    resposta_do_usuario.dicionario_de_lancamento(lista_de_descricao, lista_de_entradas, lista_de_saidas, lista_de_saldo,
-                                                                                     lista_de_data)
+    print(f'\n{22 * "*"} LIVRO CAIXA {22 * "*"}')
+    print(menu_do_usuario.imprime_data_frame())
 
-    #lista_de_lancamentos = enumerate(lista_de_lancamentos)
-    #for index, resultado in lista_de_lancamentos:
-    #    print(f'Cod: {index} | {resultado}')
+    resposta_salvar_arquivo = input(f'\nDeseja salvar os lançamentos em excel? (S/N)?: ').upper()
+
+    print(resposta_salvar_arquivo)
+    menu_do_usuario.salvar_arquivo(resposta_salvar_arquivo)
+
+
+
